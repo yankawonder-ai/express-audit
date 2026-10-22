@@ -102,7 +102,7 @@
                     <button onclick="addDepartment()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded">Додати</button>
                 </div>
                 <div id="departments-edit-list" class="flex flex-wrap gap-2 pt-2">
-                    <!-- Список відділень з кнопками видалення -->
+                    <!-- Список відділень -->
                 </div>
             </div>
 
@@ -130,7 +130,7 @@
             </div>
 
             <div id="structure-edit-list" class="space-y-4">
-                <!-- Повний перегляд та видалення розділів і питань -->
+                <!-- Список розділів та питань -->
             </div>
         </div>
 
@@ -141,7 +141,6 @@
     </footer>
 
     <script>
-        // Початкові дані за замовчуванням
         let defaultDepartments = [
             "Хірургічне відділення",
             "Відділення анестезіології та інтенсивної терапії",
@@ -205,11 +204,14 @@
 
         function renderDepartmentsSelect() {
             const select = document.getElementById('audit-dept');
-            select.innerHTML = defaultDepartments.map(d => `<option value="${d}">${d}</option>`).join('');
+            if (select) {
+                select.innerHTML = defaultDepartments.map(d => `<option value="${d}">${d}</option>`).join('');
+            }
         }
 
         function renderAuditForm() {
             const container = document.getElementById('sections-container');
+            if (!container) return;
             let html = '';
 
             defaultCategories.forEach((cat, cIdx) => {
@@ -263,47 +265,51 @@
                 else if (val === 'no') { totalEvaluated++; }
             });
             const score = totalEvaluated > 0 ? Math.round((yesCount / totalEvaluated) * 100) : 0;
-            document.getElementById('score-display').innerText = score + '%';
+            const scoreEl = document.getElementById('score-display');
+            if (scoreEl) scoreEl.innerText = score + '%';
             return score;
         }
 
         function renderSettingsPanel() {
-            // Список відділень для видалення
             const deptsList = document.getElementById('departments-edit-list');
-            deptsList.innerHTML = defaultDepartments.map((d, idx) => `
-                <span class="inline-flex items-center gap-1 bg-white border border-slate-300 px-2.5 py-1 rounded-full text-xs font-medium">
-                    ${d}
-                    <button onclick="removeDepartment(${idx})" class="text-red-500 font-bold ml-1 hover:text-red-700">✕</button>
-                </span>
-            `).join('');
+            if (deptsList) {
+                deptsList.innerHTML = defaultDepartments.map((d, idx) => `
+                    <span class="inline-flex items-center gap-1 bg-white border border-slate-300 px-2.5 py-1 rounded-full text-xs font-medium">
+                        ${d}
+                        <button onclick="removeDepartment(${idx})" class="text-red-500 font-bold ml-1 hover:text-red-700">✕</button>
+                    </span>
+                `).join('');
+            }
 
-            // Селект категорій для додавання питань
             const selectCat = document.getElementById('new-q-cat');
-            selectCat.innerHTML = defaultCategories.map((c, i) => `<option value="${i}">${c.title}</option>`).join('');
+            if (selectCat) {
+                selectCat.innerHTML = defaultCategories.map((c, i) => `<option value="${i}">${c.title}</option>`).join('');
+            }
 
-            // Редагування розділів та питань
             const structureList = document.getElementById('structure-edit-list');
-            let structHtml = '';
-            defaultCategories.forEach((cat, cIdx) => {
-                structHtml += `
-                    <div class="p-4 border border-slate-200 rounded-lg space-y-2 bg-slate-50">
-                        <div class="flex justify-between items-center">
-                            <h4 class="font-bold text-sm text-blue-900">${cat.title}</h4>
-                            <button onclick="removeCategory(${cIdx})" class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded font-semibold hover:bg-red-200">Видалити розділ</button>
-                        </div>
-                        <ul class="space-y-1 pl-2">
-                `;
-                cat.questions.forEach((q, qIdx) => {
+            if (structureList) {
+                let structHtml = '';
+                defaultCategories.forEach((cat, cIdx) => {
                     structHtml += `
-                        <li class="flex justify-between items-center text-xs p-1.5 bg-white rounded border border-slate-200">
-                            <span>${q}</span>
-                            <button onclick="removeQuestion(${cIdx}, ${qIdx})" class="text-red-500 hover:text-red-700 font-bold ml-2">✕</button>
-                        </li>
+                        <div class="p-4 border border-slate-200 rounded-lg space-y-2 bg-slate-50">
+                            <div class="flex justify-between items-center">
+                                <h4 class="font-bold text-sm text-blue-900">${cat.title}</h4>
+                                <button onclick="removeCategory(${cIdx})" class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded font-semibold hover:bg-red-200">Видалити розділ</button>
+                            </div>
+                            <ul class="space-y-1 pl-2">
                     `;
+                    cat.questions.forEach((q, qIdx) => {
+                        structHtml += `
+                            <li class="flex justify-between items-center text-xs p-1.5 bg-white rounded border border-slate-200">
+                                <span>${q}</span>
+                                <button onclick="removeQuestion(${cIdx}, ${qIdx})" class="text-red-500 hover:text-red-700 font-bold ml-2">✕</button>
+                            </li>
+                        `;
+                    });
+                    structHtml += `</ul></div>`;
                 });
-                structHtml += `</ul></div>`;
-            });
-            structureList.innerHTML = structHtml;
+                structureList.innerHTML = structHtml;
+            }
         }
 
         function addDepartment() {
@@ -385,7 +391,8 @@
                     alert("Аудит збережено в хмару!");
                     currentAnswers = {};
                     renderAuditForm();
-                    document.getElementById('score-display').innerText = '0%';
+                    const scoreEl = document.getElementById('score-display');
+                    if (scoreEl) scoreEl.innerText = '0%';
                 })
                 .catch(err => alert("Помилка: " + err.message));
         }
@@ -394,15 +401,16 @@
             const auditsRef = window.firebaseRef(window.db, 'audits');
             const statusIndicator = document.getElementById('sync-status');
             window.firebaseOnValue(auditsRef, (snapshot) => {
-                statusIndicator.innerHTML = '<span class="w-2 h-2 rounded-full bg-green-400"></span> Синхронізовано';
+                if (statusIndicator) statusIndicator.innerHTML = '<span class="w-2 h-2 rounded-full bg-green-400"></span> Синхронізовано';
                 renderHistory(snapshot.val());
             }, (error) => {
-                statusIndicator.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-400"></span> Помилка';
+                if (statusIndicator) statusIndicator.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-400"></span> Помилка';
             });
         }
 
         function renderHistory(data) {
             const list = document.getElementById('audits-history-list');
+            if (!list) return;
             if (!data) {
                 list.innerHTML = '<p class="text-slate-400 italic">Поки немає збережених аудитів.</p>';
                 return;
@@ -440,13 +448,21 @@
         }
 
         function switchTab(tab) {
-            document.getElementById('section-audit').classList.toggle('hidden', tab !== 'audit');
-            document.getElementById('section-history').classList.toggle('hidden', tab !== 'history');
-            document.getElementById('section-settings').classList.toggle('hidden', tab !== 'settings');
+            const secAudit = document.getElementById('section-audit');
+            const secHistory = document.getElementById('section-history');
+            const secSettings = document.getElementById('section-settings');
 
-            document.getElementById('tab-audit-btn').className = tab === 'audit' ? "px-4 py-2 bg-white font-semibold rounded-t-lg border-t border-x border-slate-300 text-blue-600 whitespace-nowrap" : "px-4 py-2 bg-slate-200 font-medium rounded-t-lg border-t border-x border-slate-300 text-slate-600 whitespace-nowrap";
-            document.getElementById('tab-history-btn').className = tab === 'history' ? "px-4 py-2 bg-white font-semibold rounded-t-lg border-t border-x border-slate-300 text-blue-600 whitespace-nowrap" : "px-4 py-2 bg-slate-200 font-medium rounded-t-lg border-t border-x border-slate-300 text-slate-600 whitespace-nowrap";
-            document.getElementById('tab-settings-btn').className = tab === 'settings' ? "px-4 py-2 bg-white font-semibold rounded-t-lg border-t border-x border-slate-300 text-blue-600 whitespace-nowrap" : "px-4 py-2 bg-slate-200 font-medium rounded-t-lg border-t border-x border-slate-300 text-slate-600 whitespace-nowrap";
+            if (secAudit) secAudit.classList.toggle('hidden', tab !== 'audit');
+            if (secHistory) secHistory.classList.toggle('hidden', tab !== 'history');
+            if (secSettings) secSettings.classList.toggle('hidden', tab !== 'settings');
+
+            const btnAudit = document.getElementById('tab-audit-btn');
+            const btnHistory = document.getElementById('tab-history-btn');
+            const btnSettings = document.getElementById('tab-settings-btn');
+
+            if (btnAudit) btnAudit.className = tab === 'audit' ? "px-4 py-2 bg-white font-semibold rounded-t-lg border-t border-x border-slate-300 text-blue-600 whitespace-nowrap" : "px-4 py-2 bg-slate-200 font-medium rounded-t-lg border-t border-x border-slate-300 text-slate-600 whitespace-nowrap";
+            if (btnHistory) btnHistory.className = tab === 'history' ? "px-4 py-2 bg-white font-semibold rounded-t-lg border-t border-x border-slate-300 text-blue-600 whitespace-nowrap" : "px-4 py-2 bg-slate-200 font-medium rounded-t-lg border-t border-x border-slate-300 text-slate-600 whitespace-nowrap";
+            if (btnSettings) btnSettings.className = tab === 'settings' ? "px-4 py-2 bg-white font-semibold rounded-t-lg border-t border-x border-slate-300 text-blue-600 whitespace-nowrap" : "px-4 py-2 bg-slate-200 font-medium rounded-t-lg border-t border-x border-slate-300 text-slate-600 whitespace-nowrap";
         }
     </script>
 </body>
