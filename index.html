@@ -142,7 +142,7 @@
     </footer>
 
     <script>
-        let currentDepartments = [
+        const defaultDepartments = [
             "хірургічний центр",
             "центр торакальної хірургії",
             "центр здоров'я жінки",
@@ -152,7 +152,7 @@
             "хіміотерапевтичне відділення"
         ];
 
-        let currentCategories = [
+        const defaultCategories = [
             {
                 id: "hand_hygiene",
                 title: "1. Гігієна рук",
@@ -169,9 +169,27 @@
                     "Використання одноразових рукавичок строго за показаннями",
                     "Правильне надягання та знімання засобів захисту"
                 ]
+            },
+            {
+                id: "desinfection",
+                title: "3. Дезінфекція та стерилізація",
+                questions: [
+                    "Дотримання правил приготування та маркування дезрозчинів",
+                    "Дотримання термінів та умов знезараження робочих поверхонь"
+                ]
+            },
+            {
+                id: "waste_management",
+                title: "4. Поводження з медичними відходами",
+                questions: [
+                    "Правильне сортування відходів за категоріями (А, Б, В)",
+                    "Наявність непроколюваних контейнерів для гострого інструментарію"
+                ]
             }
         ];
 
+        let currentDepartments = [...defaultDepartments];
+        let currentCategories = JSON.parse(JSON.stringify(defaultCategories));
         let currentAnswers = {};
         let allLoadedAudits = {};
 
@@ -187,21 +205,22 @@
         function initCloudSync() {
             const statusIndicator = document.getElementById('sync-status');
             
-            // Синхронізація структури (відділення та теми)
             const structureRef = window.firebaseRef(window.db, 'structure');
             window.firebaseOnValue(structureRef, (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
-                    if (data.departments) currentDepartments = data.departments;
-                    if (data.categories) currentCategories = data.categories;
+                    if (data.departments && data.departments.length > 0) {
+                        currentDepartments = data.departments;
+                    }
+                    if (data.categories && data.categories.length > 0) {
+                        currentCategories = data.categories;
+                    }
                 } else {
-                    // Якщо в хмарі пусто, зберігаємо початкові дані туди
                     saveStructureToCloud();
                 }
                 renderAll();
             });
 
-            // Синхронізація історії аудитів
             const auditsRef = window.firebaseRef(window.db, 'audits');
             window.firebaseOnValue(auditsRef, (snapshot) => {
                 if (statusIndicator) statusIndicator.innerHTML = '<span class="w-2 h-2 rounded-full bg-green-400"></span> Синхронізовано';
@@ -246,19 +265,23 @@
                         <div class="space-y-2">
                 `;
 
-                cat.questions.forEach((qText, qIdx) => {
-                    const qId = `${cIdx}_${qIdx}`;
-                    html += `
-                        <div class="p-3 bg-white rounded-lg border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-sm">
-                            <span class="text-sm font-medium text-slate-800">${qText}</span>
-                            <div class="flex gap-1.5 shrink-0">
-                                <button onclick="setAnswer('${qId}', 'yes')" id="btn-${qId}-yes" class="px-3 py-1 text-xs font-semibold rounded border border-slate-300 bg-white hover:bg-green-50">Так</button>
-                                <button onclick="setAnswer('${qId}', 'no')" id="btn-${qId}-no" class="px-3 py-1 text-xs font-semibold rounded border border-slate-300 bg-white hover:bg-red-50">Ні</button>
-                                <button onclick="setAnswer('${qId}', 'na')" id="btn-${qId}-na" class="px-3 py-1 text-xs font-semibold rounded border border-slate-300 bg-white hover:bg-slate-100">Н/З</button>
+                if (cat.questions && cat.questions.length > 0) {
+                    cat.questions.forEach((qText, qIdx) => {
+                        const qId = `${cIdx}_${qIdx}`;
+                        html += `
+                            <div class="p-3 bg-white rounded-lg border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-sm">
+                                <span class="text-sm font-medium text-slate-800">${qText}</span>
+                                <div class="flex gap-1.5 shrink-0">
+                                    <button onclick="setAnswer('${qId}', 'yes')" id="btn-${qId}-yes" class="px-3 py-1 text-xs font-semibold rounded border border-slate-300 bg-white hover:bg-green-50">Так</button>
+                                    <button onclick="setAnswer('${qId}', 'no')" id="btn-${qId}-no" class="px-3 py-1 text-xs font-semibold rounded border border-slate-300 bg-white hover:bg-red-50">Ні</button>
+                                    <button onclick="setAnswer('${qId}', 'na')" id="btn-${qId}-na" class="px-3 py-1 text-xs font-semibold rounded border border-slate-300 bg-white hover:bg-slate-100">Н/З</button>
+                                </div>
                             </div>
-                        </div>
-                    `;
-                });
+                        `;
+                    });
+                } else {
+                    html += `<p class="text-xs text-slate-400 italic">У цьому розділі поки немає питань.</p>`;
+                }
                 html += `</div></div>`;
             });
             container.innerHTML = html;
@@ -323,14 +346,16 @@
                             </div>
                             <ul class="space-y-1 pl-2">
                     `;
-                    cat.questions.forEach((q, qIdx) => {
-                        structHtml += `
-                            <li class="flex justify-between items-center text-xs p-1.5 bg-white rounded border border-slate-200">
-                                <span>${q}</span>
-                                <button onclick="removeQuestion(${cIdx}, ${qIdx})" class="text-red-500 hover:text-red-700 font-bold ml-2">✕</button>
-                            </li>
-                        `;
-                    });
+                    if (cat.questions) {
+                        cat.questions.forEach((q, qIdx) => {
+                            structHtml += `
+                                <li class="flex justify-between items-center text-xs p-1.5 bg-white rounded border border-slate-200">
+                                    <span>${q}</span>
+                                    <button onclick="removeQuestion(${cIdx}, ${qIdx})" class="text-red-500 hover:text-red-700 font-bold ml-2">✕</button>
+                                </li>
+                            `;
+                        });
+                    }
                     structHtml += `</ul></div>`;
                 });
                 structureList.innerHTML = structHtml;
@@ -344,6 +369,7 @@
             currentDepartments.push(val);
             saveStructureToCloud();
             input.value = '';
+            alert("Відділення додано!");
         }
 
         function removeDepartment(idx) {
@@ -361,6 +387,7 @@
             currentCategories.push({ id: 'cat_' + Date.now(), title: val, questions: [] });
             saveStructureToCloud();
             input.value = '';
+            alert("Розділ успішно додано!");
         }
 
         function removeCategory(cIdx) {
@@ -375,10 +402,13 @@
             const input = document.getElementById('new-q-text');
             const text = input.value.trim();
             if (!text) return alert("Введіть текст питання!");
+            if (!currentCategories[catIdx].questions) {
+                currentCategories[catIdx].questions = [];
+            }
             currentCategories[catIdx].questions.push(text);
             saveStructureToCloud();
             input.value = '';
-            alert("Питання успішно додано та синхронізовано!");
+            alert("Питання успішно додано!");
         }
 
         function removeQuestion(cIdx, qIdx) {
@@ -401,7 +431,7 @@
                 author: author,
                 score: score,
                 answers: currentAnswers,
-                categoriesSnapshot: currentCategories,
+                categoriesSnapshot: JSON.parse(JSON.stringify(currentCategories)),
                 date: new Date().toLocaleString('uk-UA')
             };
 
@@ -468,12 +498,14 @@
                 let catYes = 0;
                 let catTotal = 0;
 
-                cat.questions.forEach((qText, qIdx) => {
-                    const qId = `${cIdx}_${qIdx}`;
-                    const ans = answers[qId];
-                    if (ans === 'yes') { catYes++; catTotal++; }
-                    else if (ans === 'no') { catTotal++; }
-                });
+                if (cat.questions) {
+                    cat.questions.forEach((qText, qIdx) => {
+                        const qId = `${cIdx}_${qIdx}`;
+                        const ans = answers[qId];
+                        if (ans === 'yes') { catYes++; catTotal++; }
+                        else if (ans === 'no') { catTotal++; }
+                    });
+                }
 
                 const catScore = catTotal > 0 ? Math.round((catYes / catTotal) * 100) : 0;
 
@@ -486,22 +518,24 @@
                         <div class="space-y-1.5">
                 `;
 
-                cat.questions.forEach((qText, qIdx) => {
-                    const qId = `${cIdx}_${qIdx}`;
-                    const ans = answers[qId];
-                    
-                    let badge = '<span class="text-xs px-2 py-0.5 rounded bg-slate-200 text-slate-600 font-semibold">Не вказано</span>';
-                    if (ans === 'yes') badge = '<span class="text-xs px-2 py-0.5 rounded bg-green-100 text-green-700 font-bold">Так</span>';
-                    else if (ans === 'no') badge = '<span class="text-xs px-2 py-0.5 rounded bg-red-100 text-red-700 font-bold">Ні</span>';
-                    else if (ans === 'na') badge = '<span class="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-bold">Н/З</span>';
+                if (cat.questions) {
+                    cat.questions.forEach((qText, qIdx) => {
+                        const qId = `${cIdx}_${qIdx}`;
+                        const ans = answers[qId];
+                        
+                        let badge = '<span class="text-xs px-2 py-0.5 rounded bg-slate-200 text-slate-600 font-semibold">Не вказано</span>';
+                        if (ans === 'yes') badge = '<span class="text-xs px-2 py-0.5 rounded bg-green-100 text-green-700 font-bold">Так</span>';
+                        else if (ans === 'no') badge = '<span class="text-xs px-2 py-0.5 rounded bg-red-100 text-red-700 font-bold">Ні</span>';
+                        else if (ans === 'na') badge = '<span class="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-bold">Н/З</span>';
 
-                    html += `
-                        <div class="flex justify-between items-center text-xs bg-white p-2 rounded border border-slate-100 gap-2">
-                            <span class="text-slate-700">${qText}</span>
-                            <div class="shrink-0">${badge}</div>
-                        </div>
-                    `;
-                });
+                        html += `
+                            <div class="flex justify-between items-center text-xs bg-white p-2 rounded border border-slate-100 gap-2">
+                                <span class="text-slate-700">${qText}</span>
+                                <div class="shrink-0">${badge}</div>
+                            </div>
+                        `;
+                    });
+                }
 
                 html += `</div></div>`;
             });
