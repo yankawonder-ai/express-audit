@@ -53,9 +53,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Відділення / Підрозділ:</label>
-                    <select id="audit-dept" class="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                        <!-- Динамічні відділення -->
-                    </select>
+                    <select id="audit-dept" class="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"></select>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">ПІБ Аудитора:</label>
@@ -63,9 +61,7 @@
                 </div>
             </div>
 
-            <div id="sections-container" class="space-y-6 border-t border-slate-200 pt-4">
-                <!-- Динамічні розділи та питання -->
-            </div>
+            <div id="sections-container" class="space-y-6 border-t border-slate-200 pt-4"></div>
 
             <div class="border-t border-slate-200 pt-4 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50 p-4 rounded-xl">
                 <div class="text-base font-bold text-slate-800">
@@ -80,7 +76,7 @@
         <!-- РОЗДІЛ 2: ІСТОРІЯ -->
         <div id="section-history" class="hidden bg-white p-6 rounded-b-xl rounded-tr-xl shadow-sm border border-slate-200 space-y-4">
             <div class="flex justify-between items-center mb-2">
-                <h3 class="text-lg font-bold text-slate-800">Історія проведених аудитів</h3>
+                <h3 class="text-lg font-bold text-slate-800">Історія проведених аудитів (натисніть на аудит для деталей)</h3>
                 <button onclick="exportDataJSON()" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded font-medium">
                     📥 Експорт в JSON
                 </button>
@@ -90,23 +86,19 @@
             </div>
         </div>
 
-        <!-- РОЗДІЛ 3: НАЛАШТУВАННЯ (Відділення, Розділи, Питання) -->
+        <!-- РОЗДІЛ 3: НАЛАШТУВАННЯ -->
         <div id="section-settings" class="hidden bg-white p-6 rounded-b-xl rounded-tr-xl shadow-sm border border-slate-200 space-y-6">
             <h3 class="text-lg font-bold text-slate-800">Керування структурою аудиту</h3>
 
-            <!-- Управління відділеннями -->
             <div class="p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-3">
                 <h4 class="font-semibold text-sm text-slate-700">🏥 Відділення та підрозділи:</h4>
                 <div class="flex gap-2">
                     <input type="text" id="new-dept-text" placeholder="Назва нового відділення..." class="flex-grow p-2 border border-slate-300 rounded text-sm">
                     <button onclick="addDepartment()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded">Додати</button>
                 </div>
-                <div id="departments-edit-list" class="flex flex-wrap gap-2 pt-2">
-                    <!-- Список відділень -->
-                </div>
+                <div id="departments-edit-list" class="flex flex-wrap gap-2 pt-2"></div>
             </div>
 
-            <!-- Управління розділами тем -->
             <div class="p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-3">
                 <h4 class="font-semibold text-sm text-slate-700">📂 Додати новий розділ тем:</h4>
                 <div class="flex gap-2">
@@ -115,13 +107,10 @@
                 </div>
             </div>
 
-            <!-- Управління питаннями -->
             <div class="p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-3">
                 <h4 class="font-semibold text-sm text-slate-700">❓ Додати нове питання:</h4>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <select id="new-q-cat" class="p-2 border border-slate-300 rounded text-sm">
-                        <!-- Категорії -->
-                    </select>
+                    <select id="new-q-cat" class="p-2 border border-slate-300 rounded text-sm"></select>
                     <input type="text" id="new-q-text" placeholder="Текст нового питання..." class="p-2 border border-slate-300 rounded text-sm md:col-span-2">
                 </div>
                 <button onclick="addNewQuestion()" class="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded">
@@ -129,12 +118,26 @@
                 </button>
             </div>
 
-            <div id="structure-edit-list" class="space-y-4">
-                <!-- Список розділів та питань -->
-            </div>
+            <div id="structure-edit-list" class="space-y-4"></div>
         </div>
 
     </main>
+
+    <!-- МОДАЛЬНЕ ВІКНО ДЛЯ ДЕТАЛЕЙ АУДИТУ -->
+    <div id="audit-modal" class="hidden fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="bg-blue-600 text-white p-4 flex justify-between items-center">
+                <h3 id="modal-title" class="font-bold text-lg">Деталі аудиту</h3>
+                <button onclick="closeModal()" class="text-white hover:text-slate-200 font-bold text-xl px-2">✕</button>
+            </div>
+            <div id="modal-body" class="p-6 overflow-y-auto space-y-4 flex-grow">
+                <!-- Деталі заповнюються динамічно -->
+            </div>
+            <div class="bg-slate-100 p-3 text-right border-t border-slate-200">
+                <button onclick="closeModal()" class="bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded text-sm font-semibold">Закрити</button>
+            </div>
+        </div>
+    </div>
 
     <footer class="bg-white border-t border-slate-200 py-3 text-center text-xs text-slate-500">
         Експрес-Аудит Інфекційного Контролю &copy; 2026
@@ -142,7 +145,7 @@
 
     <script>
         let defaultDepartments = [
-            "Хірургічне відділення",
+            "Хірургічний центр",
             "Відділення анестезіології та інтенсивної терапії",
             "Терапевтичне відділення",
             "Приймальне відділення",
@@ -170,6 +173,7 @@
         ];
 
         let currentAnswers = {};
+        let allLoadedAudits = {};
 
         window.addEventListener('DOMContentLoaded', () => {
             loadSavedData();
@@ -382,17 +386,19 @@
                 author: author,
                 score: score,
                 answers: currentAnswers,
+                categoriesSnapshot: defaultCategories, // Зберігаємо зліпок структури питань для історії
                 date: new Date().toLocaleString('uk-UA')
             };
 
             const ref = window.firebaseRef(window.db, 'audits/' + auditId);
             window.firebaseSet(ref, data)
                 .then(() => {
-                    alert("Аудит збережено в хмару!");
+                    alert("Аудит успішно збережено в хмару!");
                     currentAnswers = {};
                     renderAuditForm();
                     const scoreEl = document.getElementById('score-display');
                     if (scoreEl) scoreEl.innerText = '0%';
+                    switchTab('history');
                 })
                 .catch(err => alert("Помилка: " + err.message));
         }
@@ -402,7 +408,8 @@
             const statusIndicator = document.getElementById('sync-status');
             window.firebaseOnValue(auditsRef, (snapshot) => {
                 if (statusIndicator) statusIndicator.innerHTML = '<span class="w-2 h-2 rounded-full bg-green-400"></span> Синхронізовано';
-                renderHistory(snapshot.val());
+                allLoadedAudits = snapshot.val() || {};
+                renderHistory(allLoadedAudits);
             }, (error) => {
                 if (statusIndicator) statusIndicator.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-400"></span> Помилка';
             });
@@ -418,14 +425,18 @@
             let html = '';
             Object.keys(data).reverse().forEach(key => {
                 const item = data[key];
+                const scoreVal = (item.score !== undefined) ? item.score : 0;
+                const scoreColor = scoreVal >= 80 ? 'text-green-600' : (scoreVal >= 50 ? 'text-amber-600' : 'text-red-600');
+                
                 html += `
-                    <div class="p-4 bg-slate-50 rounded-lg border border-slate-200 flex justify-between items-center">
+                    <div onclick="openAuditModal('${item.id}')" class="p-4 bg-slate-50 hover:bg-blue-50/50 cursor-pointer rounded-lg border border-slate-200 flex justify-between items-center transition shadow-sm">
                         <div>
-                            <p class="font-bold text-slate-800">${item.dept}</p>
+                            <p class="font-bold text-slate-800 text-base">${item.dept}</p>
                             <p class="text-xs text-slate-500">Аудитор: ${item.author} • ${item.date}</p>
                         </div>
                         <div class="text-right">
-                            <span class="text-xl font-bold ${item.score >= 80 ? 'text-green-600' : (item.score >= 50 ? 'text-amber-600' : 'text-red-600')}">${item.score}%</span>
+                            <span class="text-xl font-bold ${scoreColor}">${scoreVal}%</span>
+                            <span class="block text-[10px] text-slate-400">Натисніть для деталей</span>
                         </div>
                     </div>
                 `;
@@ -433,18 +444,83 @@
             list.innerHTML = html;
         }
 
+        // Відкриття модального вікна з деталями аудиту
+        function openAuditModal(auditId) {
+            const item = allLoadedAudits[auditId];
+            if (!item) return;
+
+            document.getElementById('modal-title').innerText = `${item.dept} (${item.score || 0}%)`;
+            
+            let html = `
+                <div class="text-xs text-slate-500 bg-slate-50 p-3 rounded-lg border border-slate-200 flex justify-between">
+                    <span><b>Аудитор:</b> ${item.author}</span>
+                    <span><b>Дата:</b> ${item.date}</span>
+                </div>
+                <div class="space-y-4 pt-2">
+            `;
+
+            const categories = item.categoriesSnapshot || defaultCategories;
+            const answers = item.answers || {};
+
+            categories.forEach((cat, cIdx) => {
+                let catYes = 0;
+                let catTotal = 0;
+
+                cat.questions.forEach((qText, qIdx) => {
+                    const qId = `${cIdx}_${qIdx}`;
+                    const ans = answers[qId];
+                    if (ans === 'yes') { catYes++; catTotal++; }
+                    else if (ans === 'no') { catTotal++; }
+                });
+
+                const catScore = catTotal > 0 ? Math.round((catYes / catTotal) * 100) : 0;
+
+                html += `
+                    <div class="border border-slate-200 rounded-lg p-3 bg-slate-50/50 space-y-2">
+                        <div class="flex justify-between items-center border-b border-slate-200 pb-1.5">
+                            <h4 class="font-bold text-sm text-blue-900">${cat.title}</h4>
+                            <span class="text-xs font-bold px-2 py-0.5 rounded ${catScore >= 80 ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}">${catScore}%</span>
+                        </div>
+                        <div class="space-y-1.5">
+                `;
+
+                cat.questions.forEach((qText, qIdx) => {
+                    const qId = `${cIdx}_${qIdx}`;
+                    const ans = answers[qId];
+                    
+                    let badge = '<span class="text-xs px-2 py-0.5 rounded bg-slate-200 text-slate-600 font-semibold">Не вказано</span>';
+                    if (ans === 'yes') badge = '<span class="text-xs px-2 py-0.5 rounded bg-green-100 text-green-700 font-bold">Так</span>';
+                    else if (ans === 'no') badge = '<span class="text-xs px-2 py-0.5 rounded bg-red-100 text-red-700 font-bold">Ні</span>';
+                    else if (ans === 'na') badge = '<span class="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-bold">Н/З</span>';
+
+                    html += `
+                        <div class="flex justify-between items-center text-xs bg-white p-2 rounded border border-slate-100 gap-2">
+                            <span class="text-slate-700">${qText}</span>
+                            <div class="shrink-0">${badge}</div>
+                        </div>
+                    `;
+                });
+
+                html += `</div></div>`;
+            });
+
+            html += `</div>`;
+            document.getElementById('modal-body').innerHTML = html;
+            document.getElementById('audit-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('audit-modal').classList.add('hidden');
+        }
+
         function exportDataJSON() {
-            const auditsRef = window.firebaseRef(window.db, 'audits');
-            window.firebaseOnValue(auditsRef, (snapshot) => {
-                const data = snapshot.val() || {};
-                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
-                const a = document.createElement('a');
-                a.setAttribute("href", dataStr);
-                a.setAttribute("download", "express_audit_backup.json");
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-            }, { onlyOnce: true });
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allLoadedAudits, null, 2));
+            const a = document.createElement('a');
+            a.setAttribute("href", dataStr);
+            a.setAttribute("download", "express_audit_backup.json");
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
         }
 
         function switchTab(tab) {
