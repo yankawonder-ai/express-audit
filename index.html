@@ -4,14 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Експрес-Аудит Інфекційного Контролю</title>
-    <!-- Tailwind CSS для стилів -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Firebase SDK (Modular v10) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-        // Ваші конфігураційні дані Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyC2TGjsLbngSIeszx-80g0A8weqs0-cvLU",
             authDomain: "express-audit-4e8cc.firebaseapp.com",
@@ -23,61 +20,99 @@
             measurementId: "G-XG2VFWP9YX"
         };
 
-        // Ініціалізація Firebase
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Глобальні змінні додатку
         window.db = db;
         window.firebaseRef = ref;
         window.firebaseSet = set;
         window.firebaseOnValue = onValue;
     </script>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
 
     <header class="bg-blue-600 text-white shadow-md p-4 sticky top-0 z-50">
         <div class="max-w-4xl mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold">🩺 Експрес-Аудит</h1>
-            <div id="sync-status" class="text-xs bg-blue-700 px-2.5 py-1 rounded-full flex items-center gap-1.5">
+            <h1 class="text-xl font-bold">🩺 Експрес-Аудит ІК</h1>
+            <div id="sync-status" class="text-xs bg-blue-700 px-3 py-1 rounded-full flex items-center gap-1.5">
                 <span class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span> Синхронізація...
             </div>
         </div>
     </header>
 
     <main class="max-w-4xl mx-auto p-4 flex-grow w-full space-y-6">
-        <!-- Основний інтерфейс аудиту -->
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-            <h2 class="text-lg font-semibold mb-4 text-blue-900">Проведення аудитів та налаштування</h2>
-            <p class="text-sm text-slate-600 mb-4">Система підключена до хмарної бази даних. Усі зміни та нові аудити тепер автоматично відображаються на всіх пристроях у режимі реального часу.</p>
-            
-            <div class="flex flex-wrap gap-3">
-                <button onclick="createNewAudit()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition">
-                    + Новий аудит
-                </button>
-                <button onclick="exportDataJSON()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded-lg font-medium transition">
-                    💾 Резервна копія (JSON)
+
+        <!-- Вкладки навігації -->
+        <div class="flex border-b border-slate-300 gap-2">
+            <button id="tab-audit-btn" onclick="switchTab('audit')" class="px-4 py-2 bg-white font-semibold rounded-t-lg border-t border-x border-slate-300 text-blue-600">📝 Новий Аудит</button>
+            <button id="tab-history-btn" onclick="switchTab('history')" class="px-4 py-2 bg-slate-200 font-medium rounded-t-lg border-t border-x border-slate-300 text-slate-600">📊 Історія Аудитів</button>
+        </div>
+
+        <!-- СЕКЦІЯ 1: ФОРМА АУДИТУ -->
+        <div id="section-audit" class="bg-white p-6 rounded-b-xl rounded-tr-xl shadow-sm border border-slate-200 space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Відділення / Підрозділ:</label>
+                    <select id="audit-dept" class="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="Хірургічне відділення">Хірургічне відділення</option>
+                        <option value="Відділення анестезіології та інтенсивної терапії">Відділення анестезіології та ІТ</option>
+                        <option value="Терапевтичне відділення">Терапевтичне відділення</option>
+                        <option value="Приймальне відділення">Приймальне відділення</option>
+                        <option value="Амбулаторне / Поліклініка">Амбулаторне / Поліклініка</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">ПІБ Аудитора:</label>
+                    <input type="text" id="audit-author" placeholder="Введіть ваші ініціали" class="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+
+            <!-- Питання чек-листа -->
+            <div class="border-t border-slate-200 pt-4">
+                <h3 class="text-md font-bold text-slate-800 mb-3">Чек-лист гігієни рук та інфекційного контролю:</h3>
+                
+                <div id="questions-container" class="space-y-4">
+                    <!-- Динамічно завантажуються питання -->
+                </div>
+            </div>
+
+            <div class="border-t border-slate-200 pt-4 flex justify-between items-center">
+                <div class="text-sm font-semibold">
+                    Результат: <span id="score-display" class="text-lg text-blue-600">0%</span>
+                </div>
+                <button onclick="saveAuditToCloud()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2.5 rounded-lg transition shadow">
+                    💾 Зберегти в хмару
                 </button>
             </div>
         </div>
 
-        <!-- Список аудитів -->
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-            <h3 class="text-md font-semibold mb-3 text-slate-700">Останні збережені аудити</h3>
-            <div id="audits-list" class="space-y-2">
-                <p class="text-sm text-slate-400 italic">Завантаження даних з хмари...</p>
+        <!-- СЕКЦІЯ 2: ІСТОРІЯ АУДИТІВ -->
+        <div id="section-history" class="hidden bg-white p-6 rounded-b-xl rounded-tr-xl shadow-sm border border-slate-200 space-y-4">
+            <h3 class="text-lg font-bold text-slate-800">Збережені хмарні аудити</h3>
+            <div id="audits-history-list" class="space-y-3">
+                <p class="text-slate-400 italic">Завантаження...</p>
             </div>
         </div>
+
     </main>
 
     <footer class="bg-white border-t border-slate-200 py-3 text-center text-xs text-slate-500">
-        Інфекційний контроль Express Audit &copy; 2026
+        Експрес-Аудит Інфекційного Контролю &copy; 2026
     </footer>
 
     <script>
-        // Логіка підключення до Firebase та управління даними
+        const defaultQuestions = [
+            "Наявність антисептика у доступних місцях та біля ліжка пацієнта",
+            "Дотримання техніки гігієнічної обробки рук персоналом",
+            "Використання одноразових медичних рукавичок відповідно до показань",
+            "Наявність та правильність використання засобів індивідуального захисту (ЗІЗ)",
+            "Правильність маркування та дезінфекції робочих поверхонь"
+        ];
+
+        let currentAnswers = {};
+
         window.addEventListener('DOMContentLoaded', () => {
-            // Очікуємо ініціалізації Firebase
+            renderQuestions();
             const checkFirebase = setInterval(() => {
                 if (window.db) {
                     clearInterval(checkFirebase);
@@ -86,45 +121,90 @@
             }, 100);
         });
 
+        function renderQuestions() {
+            const container = document.getElementById('questions-container');
+            container.innerHTML = defaultQuestions.map((q, idx) => `
+                <div class="p-3.5 bg-slate-50 rounded-lg border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <span class="text-sm font-medium text-slate-800">${idx + 1}. ${q}</span>
+                    <div class="flex gap-2">
+                        <button onclick="setAnswer(${idx}, 'yes')" id="btn-${idx}-yes" class="px-3 py-1 text-xs font-semibold rounded border border-slate-300 bg-white hover:bg-green-50">Так</button>
+                        <button onclick="setAnswer(${idx}, 'no')" id="btn-${idx}-no" class="px-3 py-1 text-xs font-semibold rounded border border-slate-300 bg-white hover:bg-red-50">Ні</button>
+                        <button onclick="setAnswer(${idx}, 'na')" id="btn-${idx}-na" class="px-3 py-1 text-xs font-semibold rounded border border-slate-300 bg-white hover:bg-slate-100">Н/З</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function setAnswer(index, val) {
+            currentAnswers[index] = val;
+            ['yes', 'no', 'na'].forEach(v => {
+                const btn = document.getElementById(`btn-${index}-${v}`);
+                if (v === val) {
+                    if (v === 'yes') btn.className = "px-3 py-1 text-xs font-bold rounded bg-green-600 text-white";
+                    if (v === 'no') btn.className = "px-3 py-1 text-xs font-bold rounded bg-red-600 text-white";
+                    if (v === 'na') btn.className = "px-3 py-1 text-xs font-bold rounded bg-slate-500 text-white";
+                } else {
+                    btn.className = "px-3 py-1 text-xs font-semibold rounded border border-slate-300 bg-white text-slate-700";
+                }
+            });
+            calculateScore();
+        }
+
+        function calculateScore() {
+            let yesCount = 0;
+            let total = 0;
+            defaultQuestions.forEach((_, idx) => {
+                if (currentAnswers[idx] === 'yes') { yesCount++; total++; }
+                else if (currentAnswers[idx] === 'no') { total++; }
+            });
+            const score = total > 0 ? Math.round((yesCount / total) * 100) : 0;
+            document.getElementById('score-display').innerText = score + '%';
+            return score;
+        }
+
+        function saveAuditToCloud() {
+            if (!window.db) return alert("Немає підключення до бази!");
+            const dept = document.getElementById('audit-dept').value;
+            const author = document.getElementById('audit-author').value || "Анонімно";
+            const score = calculateScore();
+
+            const auditId = 'audit_' + Date.now();
+            const data = {
+                id: auditId,
+                dept: dept,
+                author: author,
+                score: score,
+                answers: currentAnswers,
+                date: new Date().toLocaleString('uk-UA')
+            };
+
+            const ref = window.firebaseRef(window.db, 'audits/' + auditId);
+            window.firebaseSet(ref, data)
+                .then(() => {
+                    alert("Аудит збережено в хмару!");
+                    currentAnswers = {};
+                    renderQuestions();
+                    document.getElementById('score-display').innerText = '0%';
+                })
+                .catch(err => alert("Помилка: " + err.message));
+        }
+
         function initCloudSync() {
             const auditsRef = window.firebaseRef(window.db, 'audits');
             const statusIndicator = document.getElementById('sync-status');
 
-            // Слухаємо зміни в реальному часі
             window.firebaseOnValue(auditsRef, (snapshot) => {
                 statusIndicator.innerHTML = '<span class="w-2 h-2 rounded-full bg-green-400"></span> Синхронізовано';
-                const data = snapshot.val();
-                renderAudits(data);
+                renderHistory(snapshot.val());
             }, (error) => {
-                statusIndicator.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-400"></span> Помилка зв\'язку';
-                console.error("Firebase sync error:", error);
+                statusIndicator.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-400"></span> Помилка';
             });
         }
 
-        function createNewAudit() {
-            if (!window.db) return;
-            const auditId = 'audit_' + Date.now();
-            const newAuditData = {
-                id: auditId,
-                date: new Date().toLocaleString('uk-UA'),
-                department: "Відділення загальне",
-                status: "Створено з мобільного/ПК"
-            };
-
-            const auditRef = window.firebaseRef(window.db, 'audits/' + auditId);
-            window.firebaseSet(auditRef, newAuditData)
-                .then(() => {
-                    alert("Аудит успішно збережено та синхронізовано в хмарі!");
-                })
-                .catch((error) => {
-                    alert("Помилка збереження: " + error.message);
-                });
-        }
-
-        function renderAudits(data) {
-            const listContainer = document.getElementById('audits-list');
+        function renderHistory(data) {
+            const list = document.getElementById('audits-history-list');
             if (!data) {
-                listContainer.innerHTML = '<p class="text-sm text-slate-400 italic">Поки що немає збережених аудитів.</p>';
+                list.innerHTML = '<p class="text-slate-400 italic">Жодного аудиту ще не збережено.</p>';
                 return;
             }
 
@@ -132,30 +212,31 @@
             Object.keys(data).reverse().forEach(key => {
                 const item = data[key];
                 html += `
-                    <div class="p-3 bg-slate-50 border border-slate-100 rounded-lg flex justify-between items-center">
+                    <div class="p-4 bg-slate-50 rounded-lg border border-slate-200 flex justify-between items-center">
                         <div>
-                            <p class="font-medium text-sm text-slate-800">${item.department}</p>
-                            <p class="text-xs text-slate-500">${item.date}</p>
+                            <p class="font-bold text-slate-800">${item.dept}</p>
+                            <p class="text-xs text-slate-500">Аудитор: ${item.author} • ${item.date}</p>
                         </div>
-                        <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">${item.status}</span>
+                        <div class="text-right">
+                            <span class="text-lg font-bold ${item.score >= 80 ? 'text-green-600' : 'text-amber-600'}">${item.score}%</span>
+                        </div>
                     </div>
                 `;
             });
-            listContainer.innerHTML = html;
+            list.innerHTML = html;
         }
 
-        function exportDataJSON() {
-            const auditsRef = window.firebaseRef(window.db, 'audits');
-            window.firebaseOnValue(auditsRef, (snapshot) => {
-                const data = snapshot.val() || {};
-                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
-                const downloadAnchor = document.createElement('a');
-                downloadAnchor.setAttribute("href", dataStr);
-                downloadAnchor.setAttribute("download", "audit_backup.json");
-                document.body.appendChild(downloadAnchor);
-                downloadAnchor.click();
-                downloadAnchor.remove();
-            }, { onlyOnce: true });
+        function switchTab(tab) {
+            document.getElementById('section-audit').classList.toggle('hidden', tab !== 'audit');
+            document.getElementById('section-history').classList.toggle('hidden', tab !== 'history');
+            
+            document.getElementById('tab-audit-btn').className = tab === 'audit' 
+                ? "px-4 py-2 bg-white font-semibold rounded-t-lg border-t border-x border-slate-300 text-blue-600"
+                : "px-4 py-2 bg-slate-200 font-medium rounded-t-lg border-t border-x border-slate-300 text-slate-600";
+
+            document.getElementById('tab-history-btn').className = tab === 'history' 
+                ? "px-4 py-2 bg-white font-semibold rounded-t-lg border-t border-x border-slate-300 text-blue-600"
+                : "px-4 py-2 bg-slate-200 font-medium rounded-t-lg border-t border-x border-slate-300 text-slate-600";
         }
     </script>
 </body>
